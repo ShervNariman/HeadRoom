@@ -1,0 +1,21 @@
+{
+  "folders": [
+    {
+      "name": "Headroom",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "files.exclude": {
+      ".next": true,
+      "node_modules": true
+    },
+    "search.exclude": {
+      ".next": true,
+      "node_modules": true
+    }
+  }
+}
