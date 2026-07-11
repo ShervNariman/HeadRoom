@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   demoScenarios,
   type DemoScenario,
@@ -105,23 +105,19 @@ function ProviderRow({ provider }: { provider: ProviderMetric }) {
   );
 }
 
-function SignalBanner({
-  provider,
-  scenario,
-}: {
-  provider: ProviderMetric;
-  scenario: DemoScenario;
-}) {
+function SignalBanner({ provider }: { provider: ProviderMetric }) {
   const isCritical = provider.status === "Critical";
   const title = isCritical
     ? `${provider.provider} may become a constraint in ${provider.runway}.`
     : `${provider.provider} is the next likely constraint.`;
 
-  const action = scenario === "normal"
+  const action = !isCritical
     ? "Watch the current trend before the next launch."
     : provider.provider === "Resend"
       ? "Review onboarding email volume or increase the monthly allowance."
-      : "Increase bandwidth capacity or reduce nonessential launch traffic.";
+      : provider.provider === "OpenAI"
+        ? "Review high-cost workloads or raise the monthly budget."
+        : "Review the configured limit or reduce nonessential usage.";
 
   return (
     <section className={`signal-banner ${isCritical ? "signal-critical" : ""}`}>
@@ -146,7 +142,27 @@ export function HeadroomDashboard({
   initialScenario = "normal",
 }: HeadroomDashboardProps) {
   const [scenario, setScenario] = useState<DemoScenario>(initialScenario);
-  const providers = demoScenarios[scenario];
+  const [liveProviders, setLiveProviders] = useState<ProviderMetric[] | null>(null);
+  const [dataMode, setDataMode] = useState<"demo" | "live">("demo");
+
+  useEffect(() => {
+    if (recording) return;
+
+    fetch("/api/dashboard", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((value: { mode?: "demo" | "live"; providers?: ProviderMetric[] }) => {
+        if (value.mode === "live" && value.providers?.length) {
+          setLiveProviders(value.providers);
+          setDataMode("live");
+        }
+      })
+      .catch(() => {
+        setLiveProviders(null);
+        setDataMode("demo");
+      });
+  }, [recording]);
+
+  const providers = liveProviders?.length ? liveProviders : demoScenarios[scenario];
 
   const summary = useMemo(() => {
     const totalSpend = providers.reduce((sum, provider) => sum + provider.spend, 0);
@@ -169,6 +185,7 @@ export function HeadroomDashboard({
             <span>Headroom</span>
           </Link>
           <div className="topbar-actions">
+            <Link className="text-link" href="/setup">Connect providers</Link>
             <Link className="text-link" href="/guide">Build your own</Link>
             <span className="privacy-pill">Private MVP</span>
             <button className="avatar" type="button" aria-label="Account menu">SN</button>
@@ -185,7 +202,7 @@ export function HeadroomDashboard({
               Usage, remaining spend, limits, and velocity across the services powering your product.
             </p>
           </div>
-          <div className="scenario-control" aria-label="Demo scenario">
+          {dataMode === "demo" && <div className="scenario-control" aria-label="Demo scenario">
             {(Object.keys(scenarioLabels) as DemoScenario[]).map((key) => (
               <button
                 key={key}
@@ -196,16 +213,16 @@ export function HeadroomDashboard({
                 {scenarioLabels[key]}
               </button>
             ))}
-          </div>
+          </div>}
         </section>
 
-        <SignalBanner provider={summary.nextConstraint} scenario={scenario} />
+        <SignalBanner provider={summary.nextConstraint} />
 
         <section className="kpi-grid" aria-label="Key performance indicators">
           <KpiCard
             label="Tracked spend"
             value={`$${summary.totalSpend}`}
-            detail="Across four connected providers this month"
+            detail={dataMode === "live" ? `Across ${providers.length} connected metrics` : "Across four demo providers this month"}
           />
           <KpiCard
             label="Top cost driver"
@@ -229,9 +246,9 @@ export function HeadroomDashboard({
           <div className="table-header">
             <div>
               <h2>Provider headroom</h2>
-              <p>Demo data · rolling comparisons · stack share is based on tracked spend</p>
+              <p>{dataMode === "live" ? "Local snapshots · rolling comparisons · stack share is based on tracked spend" : "Demo data · rolling comparisons · stack share is based on tracked spend"}</p>
             </div>
-            <div className="live-indicator"><span /> Demo mode</div>
+            <div className="live-indicator"><span /> {dataMode === "live" ? "Live local data" : "Demo mode"}</div>
           </div>
 
           <div className="table-scroll">
@@ -252,7 +269,7 @@ export function HeadroomDashboard({
               </thead>
               <tbody>
                 {summary.sortedByRisk.map((provider) => (
-                  <ProviderRow key={provider.provider} provider={provider} />
+                  <ProviderRow key={`${provider.provider}-${provider.usage}`} provider={provider} />
                 ))}
               </tbody>
             </table>
@@ -260,7 +277,7 @@ export function HeadroomDashboard({
 
           <footer className="table-footer">
             <span>Last refresh: just now</span>
-            <span>All values shown here are deterministic demo data.</span>
+            <span>{dataMode === "live" ? "Provider credentials remain server-side." : "All values shown here are deterministic demo data."}</span>
           </footer>
         </section>
       </main>

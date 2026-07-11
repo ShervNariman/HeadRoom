@@ -1,6 +1,6 @@
 # Headroom security boundary
 
-Headroom is intended to keep the implementation reproducible without exposing operational data.
+Headroom keeps the implementation reproducible without exposing operational data.
 
 ## Safe to share
 
@@ -8,21 +8,29 @@ Headroom is intended to keep the implementation reproducible without exposing op
 - deterministic mock data
 - architecture diagrams
 - environment variable names
-- high-level provider setup instructions
+- generic webhook payload examples
 
 ## Keep private
 
 - API keys and access tokens
+- `.headroom/snapshots.json`
 - account and organization identifiers
 - exact live balances and invoices
 - production request logs
-- customer or project usage data
 
-## Required controls
+## Current controls
 
-- Use read-only or least-privilege credentials whenever available.
-- Execute provider requests server-side.
-- Keep `.env*` files ignored except `.env.example`.
-- Ensure `/record/headroom` cannot import or query live provider integrations.
-- Redact secrets and private values from errors and logs.
-- Review screenshots before publishing.
+- `.env*` is ignored except `.env.example`.
+- `.headroom/` is ignored.
+- `/record/headroom` does not fetch the live dashboard API.
+- `/api/ingest` requires `HEADROOM_INGEST_TOKEN`.
+- Deployed manual and sync actions require `HEADROOM_ACCESS_TOKEN`.
+- Provider requests execute server-side.
+
+## OpenAI warning
+
+The organization usage and costs endpoints use an OpenAI organization admin key. This is a high-privilege credential, not a read-only key. Keep Headroom private, store the key only in server-side environment variables, and rotate it immediately if exposed.
+
+## Before publishing screenshots
+
+Use `/record/headroom`, not the private dashboard. Confirm the image contains no browser extensions, account identifiers, exact live balances, or environment values.
