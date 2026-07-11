@@ -1,0 +1,35 @@
+---
+description: Headroom product, engineering, security, and build-in-public rules
+alwaysApply: true
+---
+
+# Headroom working rules
+
+## Product goal
+Build a beautiful, useful private API runway dashboard that also works as a concise public teaching artifact.
+
+## Narrow wedge
+Headroom answers: which usage-based provider will become a constraint next, why, and what should the operator do?
+
+## UI requirements
+- Prioritize the Headroom signal, runway, status, and provider table.
+- Keep the interface calm, editorial, and screenshot-ready.
+- Avoid decorative charts or metrics that do not change a decision.
+- Use deterministic demo data for all public routes and captures.
+
+## Security requirements
+- Provider credentials are server-side only and read-only whenever possible.
+- `/record/headroom` must never access live credentials or private data.
+- Never log, commit, or screenshot API keys, account IDs, invoices, or exact live balances.
+- Prefer explicit unavailable or stale states over invented precision.
+
+## Content requirements
+- Capture only four meaningful proof points: thesis, useful dashboard, detected risk, copyable blueprint.
+- Keep public explanations high-level and reproducible.
+- Public code and mock data are encouraged; private account data stays private.
+
+## Engineering defaults
+- Next.js App Router, TypeScript, Tailwind, pnpm.
+- Minimal dependencies.
+- Explainable calculations and conservative runway language.
+- Run `pnpm lint` and `pnpm build` before treating a milestone as complete.
