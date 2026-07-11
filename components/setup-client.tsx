@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type SetupStatus = {
   openai: boolean;
@@ -24,17 +24,16 @@ export function SetupClient() {
   const [accessToken, setAccessToken] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("http://localhost:3000");
+  const origin = "http://localhost:3000";
 
   useEffect(() => {
-    setOrigin(window.location.origin);
     fetch("/api/setup/status", { cache: "no-store" })
       .then((response) => response.json())
       .then((value: SetupStatus) => setStatus(value))
       .catch(() => setNotice({ tone: "error", message: "Could not read setup status." }));
   }, []);
 
-  const webhookExample = useMemo(() => `curl -X POST ${origin}/api/ingest \\
+  const webhookExample = `curl -X POST ${origin}/api/ingest \\
   -H "Authorization: Bearer YOUR_INGEST_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -45,7 +44,7 @@ export function SetupClient() {
     "limit": 1000,
     "spend": 31.40,
     "budget": 50
-  }'`, [origin]);
+  }'`;
 
   async function syncOpenAI() {
     setBusy("openai");
