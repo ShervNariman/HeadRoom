@@ -1,0 +1,49 @@
+name: Headroom CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.13.1 --activate
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: pnpm lint > lint.log 2>&1
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: lint.log
+
+      - name: Fail on lint errors
+        if: steps.lint.outcome == 'failure'
+        run: exit 1
+
+      - name: Build
+        run: pnpm build

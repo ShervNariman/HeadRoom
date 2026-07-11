@@ -2,40 +2,11 @@
 
 **Know what your product will run out of next.**
 
-Headroom is a private dashboard for monitoring API usage, remaining spend, limits, short-term velocity, and estimated runway across the services powering a modern SaaS or AI product.
+Headroom is a private, local-first dashboard for monitoring usage, spend, limits, velocity, and estimated runway across the services powering a modern product.
 
-The code can be shared publicly. Provider credentials, exact account usage, and the live deployment remain private.
+It is designed to be useful in minutes and understandable enough to copy.
 
-## The narrow problem
-
-Every usage-based provider has its own console. Small teams can usually see individual totals, but not one clear answer to:
-
-> Which provider is becoming a constraint, how quickly is it changing, and what should we do next?
-
-Headroom is built around that question—not generic invoice reporting.
-
-## What the dashboard shows
-
-| Provider | Usage | Spend remaining | Limit | Stack share | 1h | 24h | 7d | Runway | Status |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| OpenAI | 8.2M tokens | $58 | $100 budget | 46% | +12% | +31% | +8% | 14 days | Elevated |
-| Resend | 2,760 emails | 240 emails | 3,000/month | 12% | +87% | +48% | +22% | 19 hours | Critical |
-
-The main Headroom signal combines visible inputs into a plain-language warning and recommended action.
-
-## Current MVP
-
-- Next.js, TypeScript, and Tailwind
-- Deterministic normal, spike, and near-limit scenarios
-- KPI summary cards
-- Provider usage and runway table
-- Explainable next-constraint alert
-- `/record/headroom` screenshot route
-- `/guide` high-level build blueprint
-- Public-code/private-data security boundary
-- Repo-specific Cursor workspace and rules
-
-## Local setup
+## Fastest setup
 
 ```bash
 pnpm install
@@ -43,24 +14,48 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Open:
+Open `http://localhost:3000/setup` and choose one path:
 
-- `http://localhost:3000/dashboard`
-- `http://localhost:3000/record/headroom?scenario=critical`
-- `http://localhost:3000/guide`
+1. **Connect OpenAI** — sync organization token usage and costs.
+2. **Send a webhook** — post usage from any metered service.
+3. **Add manually** — enter one provider without an API.
 
-Demo mode requires no provider credentials.
+You only need one provider to start.
 
-## Build your own
+## What the dashboard answers
 
-1. Fetch usage and limit data server-side using read-only credentials.
-2. Normalize every provider into timestamped snapshots.
-3. Compare matching metrics across 1h, 24h, and 7d windows.
-4. Estimate time to budget or quota exhaustion.
-5. Keep the recording route deterministic and disconnected from live data.
+- Which provider is doing the most financial heavy lifting?
+- What changed over 1 hour, 24 hours, and 7 days?
+- Which configured limit is closest?
+- How much runway remains at the current pace?
+- What action should be taken next?
 
-See [docs/architecture.md](docs/architecture.md) and [docs/security.md](docs/security.md).
+## Current integrations
+
+| Path | Status | Best for |
+|---|---|---|
+| Manual provider form | Working | Any service without an accessible usage API |
+| Generic JSON webhook | Working | Cron jobs, scripts, automations, and unsupported providers |
+| OpenAI organization sync | Working | Month-to-date completion tokens and organization costs |
+
+See [docs/provider-integrations.md](docs/provider-integrations.md) for payloads and credential notes.
+
+## Important routes
+
+- `/setup` — friendly three-path onboarding
+- `/dashboard` — private local data, with demo fallback
+- `/record/headroom?scenario=critical` — deterministic X capture route
+- `/guide` — high-level copyable blueprint
+
+## Private data boundary
+
+- `.headroom/snapshots.json` is ignored by Git.
+- `.env.local` is ignored by Git.
+- The recording route never reads live data.
+- The OpenAI key stays server-side.
+- The webhook requires `HEADROOM_INGEST_TOKEN`.
+- Deployed private actions require `HEADROOM_ACCESS_TOKEN`.
 
 ## Product boundary
 
-Headroom is a read-only monitor. The MVP does not proxy production traffic, modify provider plans, or automatically switch providers.
+Headroom v0.3 is a single-user, local-first monitor. It does not proxy production traffic, alter provider plans, or automatically switch providers. A durable database and full authentication are intentionally outside this marketing MVP.

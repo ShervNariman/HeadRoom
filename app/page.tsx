@@ -15,7 +15,8 @@ export default function Home() {
           what will become a constraint next?
         </p>
         <div className="landing-actions">
-          <Link className="primary-button" href="/dashboard">Open dashboard</Link>
+          <Link className="primary-button" href="/setup">Connect my first provider</Link>
+          <Link className="secondary-button" href="/dashboard">View demo dashboard</Link>
           <Link className="secondary-button" href="/guide">Copy the blueprint</Link>
         </div>
         <div className="landing-note">

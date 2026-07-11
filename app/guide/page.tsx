@@ -3,8 +3,8 @@ import Link from "next/link";
 const steps = [
   {
     number: "01",
-    title: "Connect read-only provider data",
-    body: "Fetch usage, cost, quota, and reset information server-side. Keep credentials out of the browser.",
+    title: "Choose one simple input path",
+    body: "Start with the manual form, generic webhook, or OpenAI organization sync. One provider is enough.",
   },
   {
     number: "02",
@@ -31,7 +31,10 @@ export default function GuidePage() {
           <span className="brand-symbol">H</span>
           <span>Headroom</span>
         </Link>
-        <Link className="secondary-button" href="/dashboard">Open dashboard</Link>
+        <div className="setup-nav">
+          <Link className="text-link" href="/setup">Connect a provider</Link>
+          <Link className="secondary-button" href="/dashboard">Open dashboard</Link>
+        </div>
       </header>
 
       <section className="guide-hero">
@@ -55,8 +58,8 @@ export default function GuidePage() {
 
       <section className="architecture-strip" aria-label="Headroom architecture">
         <div>
-          <span>Provider adapters</span>
-          <small>OpenAI · Vercel · Supabase · Resend</small>
+          <span>Simple inputs</span>
+          <small>manual · webhook · OpenAI sync</small>
         </div>
         <b>→</b>
         <div>
@@ -87,6 +90,7 @@ export default function GuidePage() {
           <code>pnpm install</code>
           <code>cp .env.example .env.local</code>
           <code>pnpm dev</code>
+          <Link className="primary-button" href="/setup">Open simple setup →</Link>
         </div>
       </section>
     </main>
