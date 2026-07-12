@@ -8,15 +8,19 @@ type SetupStatus = {
   webhook: boolean;
   privateActions: boolean;
   localStorage: boolean;
+  locked?: boolean;
 };
 
 type Notice = { tone: "success" | "error" | "neutral"; message: string } | null;
+
+const ACCESS_TOKEN_STORAGE_KEY = "headroom:access-token";
 
 const emptyStatus: SetupStatus = {
   openai: false,
   webhook: false,
   privateActions: false,
   localStorage: true,
+  locked: false,
 };
 
 export function SetupClient() {
@@ -26,12 +30,36 @@ export function SetupClient() {
   const [busy, setBusy] = useState<string | null>(null);
   const origin = "http://localhost:3000";
 
+  async function loadStatus(token: string) {
+    try {
+      const response = await fetch("/api/setup/status", {
+        cache: "no-store",
+        headers: token ? { "x-headroom-access-token": token } : undefined,
+      });
+      const value = await response.json() as SetupStatus;
+      setStatus(value);
+      if (!response.ok && !value.locked) {
+        setNotice({ tone: "error", message: "Could not read setup status." });
+      }
+    } catch {
+      setNotice({ tone: "error", message: "Could not read setup status." });
+    }
+  }
+
   useEffect(() => {
-    fetch("/api/setup/status", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((value: SetupStatus) => setStatus(value))
-      .catch(() => setNotice({ tone: "error", message: "Could not read setup status." }));
+    const savedToken = window.sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? "";
+    setAccessToken(savedToken);
+    void loadStatus(savedToken);
   }, []);
+
+  function updateAccessToken(value: string) {
+    setAccessToken(value);
+    if (value) {
+      window.sessionStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, value);
+    } else {
+      window.sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    }
+  }
 
   const webhookExample = `curl -X POST ${origin}/api/ingest \\
   -H "Authorization: Bearer YOUR_INGEST_TOKEN" \\
@@ -57,6 +85,7 @@ export function SetupClient() {
       const value = await response.json();
       if (!response.ok) throw new Error(value.error || "OpenAI sync failed.");
       setNotice({ tone: "success", message: "OpenAI usage was added to Headroom." });
+      await loadStatus(accessToken);
     } catch (error) {
       setNotice({ tone: "error", message: error instanceof Error ? error.message : "OpenAI sync failed." });
     } finally {
@@ -130,14 +159,16 @@ export function SetupClient() {
       </section>
 
       <section className="setup-content">
-        {status.privateActions && (
+        {(status.privateActions || status.locked) && (
           <label className="access-field">
             <span>Private access token</span>
             <input
               type="password"
               value={accessToken}
-              onChange={(event) => setAccessToken(event.target.value)}
-              placeholder="Required for private actions on deployed instances"
+              onChange={(event) => updateAccessToken(event.target.value)}
+              onBlur={() => void loadStatus(accessToken)}
+              placeholder="Required for private data on deployed instances"
+              autoComplete="off"
             />
           </label>
         )}
