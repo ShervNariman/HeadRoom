@@ -2,6 +2,7 @@ export type SnapshotSource = "manual" | "webhook" | "openai";
 
 export type HeadroomSnapshot = {
   id: string;
+  idempotencyKey?: string;
   provider: string;
   metric: string;
   usage: number;
@@ -26,6 +27,7 @@ export type SnapshotInput = {
   currency?: string;
   project?: string;
   timestamp?: string;
+  idempotencyKey?: string;
 };
 
 function optionalFiniteNumber(value: unknown, field: string) {
@@ -59,8 +61,11 @@ export function normalizeSnapshotInput(
   const timestamp = value.timestamp ? new Date(String(value.timestamp)) : new Date();
   if (Number.isNaN(timestamp.getTime())) throw new Error("timestamp must be a valid date.");
 
+  const suppliedIdempotencyKey = String(value.idempotencyKey ?? "").trim();
+
   return {
     id: crypto.randomUUID(),
+    idempotencyKey: suppliedIdempotencyKey ? suppliedIdempotencyKey.slice(0, 160) : undefined,
     provider: provider.slice(0, 80),
     metric: metric.slice(0, 80),
     usage,
