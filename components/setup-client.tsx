@@ -48,8 +48,11 @@ export function SetupClient() {
 
   useEffect(() => {
     const savedToken = window.sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? "";
-    setAccessToken(savedToken);
-    void loadStatus(savedToken);
+    const timeout = window.setTimeout(() => {
+      setAccessToken(savedToken);
+      void loadStatus(savedToken);
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, []);
 
   function updateAccessToken(value: string) {
