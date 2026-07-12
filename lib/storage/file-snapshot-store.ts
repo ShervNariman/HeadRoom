@@ -3,6 +3,7 @@ import "server-only";
 import { constants, promises as fs } from "node:fs";
 import path from "node:path";
 import type { HeadroomSnapshot } from "@/lib/integrations";
+import { snapshotIdempotencyKey } from "@/lib/storage/idempotency";
 import type { SnapshotStore, StorageHealth } from "@/lib/storage/snapshot-store";
 
 const MAX_SNAPSHOTS = 5_000;
@@ -14,6 +15,13 @@ function configuredStorePath() {
     : path.join(process.cwd(), ".headroom", "snapshots.json");
 }
 
+function materializeIdempotency(snapshot: HeadroomSnapshot): HeadroomSnapshot {
+  return {
+    ...snapshot,
+    idempotencyKey: snapshotIdempotencyKey(snapshot),
+  };
+}
+
 async function readFileSnapshots(filepath: string): Promise<HeadroomSnapshot[]> {
   try {
     const content = await fs.readFile(filepath, "utf8");
@@ -21,7 +29,7 @@ async function readFileSnapshots(filepath: string): Promise<HeadroomSnapshot[]> 
     if (!Array.isArray(parsed)) {
       throw new Error("Snapshot store must contain a JSON array.");
     }
-    return parsed as HeadroomSnapshot[];
+    return (parsed as HeadroomSnapshot[]).map(materializeIdempotency);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
     throw error;
@@ -44,7 +52,13 @@ export class FileSnapshotStore implements SnapshotStore {
   appendSnapshot(snapshot: HeadroomSnapshot): Promise<HeadroomSnapshot> {
     const operation = writeQueue.then(async () => {
       const current = await readFileSnapshots(this.filepath);
-      const next = [...current, snapshot].slice(-MAX_SNAPSHOTS);
+      const materialized = materializeIdempotency(snapshot);
+      const existing = current.find(
+        (item) => item.idempotencyKey === materialized.idempotencyKey,
+      );
+      if (existing) return existing;
+
+      const next = [...current, materialized].slice(-MAX_SNAPSHOTS);
 
       await fs.mkdir(path.dirname(this.filepath), { recursive: true });
       const temporary = `${this.filepath}.${process.pid}.${crypto.randomUUID()}.tmp`;
@@ -53,7 +67,7 @@ export class FileSnapshotStore implements SnapshotStore {
         mode: 0o600,
       });
       await fs.rename(temporary, this.filepath);
-      return snapshot;
+      return materialized;
     });
 
     writeQueue = operation.catch(() => undefined);
