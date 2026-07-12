@@ -6,6 +6,8 @@ Headroom is a private, local-first dashboard for monitoring usage, spend, limits
 
 It is designed to be useful in minutes and understandable enough to copy.
 
+> **Release status:** v0.3 is a working local-first MVP. Production v1 is actively being built around PostgreSQL persistence, authenticated sessions, encrypted provider credentials, durable scheduled jobs, and complete automated release gates. See [docs/production-architecture.md](docs/production-architecture.md).
+
 ## Fastest setup
 
 ```bash
@@ -36,7 +38,7 @@ You only need one provider to start.
 |---|---|---|
 | Manual provider form | Working | Any service without an accessible usage API |
 | Generic JSON webhook | Working | Cron jobs, scripts, automations, and unsupported providers |
-| OpenAI organization sync | Working | Month-to-date completion tokens and organization costs |
+| OpenAI organization sync | Working MVP adapter | Month-to-date completion tokens and organization costs |
 
 See [docs/provider-integrations.md](docs/provider-integrations.md) for payloads and credential notes.
 
@@ -46,6 +48,17 @@ See [docs/provider-integrations.md](docs/provider-integrations.md) for payloads 
 - `/dashboard` — private local data, with demo fallback
 - `/record/headroom?scenario=critical` — deterministic X capture route
 - `/guide` — high-level copyable blueprint
+- `/api/health/live` — process liveness without private data
+- `/api/health/ready` — storage and deployment readiness without private data
+
+## Development checks
+
+```bash
+pnpm audit:public
+pnpm typecheck
+pnpm lint
+pnpm build
+```
 
 ## Private data boundary
 
@@ -54,8 +67,8 @@ See [docs/provider-integrations.md](docs/provider-integrations.md) for payloads 
 - The recording route never reads live data.
 - The OpenAI key stays server-side.
 - The webhook requires `HEADROOM_INGEST_TOKEN`.
-- Deployed private actions require `HEADROOM_ACCESS_TOKEN`.
+- Deployed private actions require `HEADROOM_ACCESS_TOKEN` during the v0.3 transition.
 
 ## Product boundary
 
-Headroom v0.3 is a single-user, local-first monitor. It does not proxy production traffic, alter provider plans, or automatically switch providers. A durable database and full authentication are intentionally outside this marketing MVP.
+Headroom v0.3 is a single-user, local-first monitor. It does not proxy production traffic, alter provider plans, or automatically switch providers. The production v1 work replaces the development file store and transitional header token with durable storage and authenticated sessions before the project is described as production-ready.
