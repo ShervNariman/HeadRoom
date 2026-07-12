@@ -1,6 +1,6 @@
 import "server-only";
 
-import { promises as fs } from "node:fs";
+import { constants, promises as fs } from "node:fs";
 import path from "node:path";
 import type { HeadroomSnapshot } from "@/lib/integrations";
 import type { SnapshotStore, StorageHealth } from "@/lib/storage/snapshot-store";
@@ -63,7 +63,7 @@ export class FileSnapshotStore implements SnapshotStore {
   async healthcheck(): Promise<StorageHealth> {
     try {
       await fs.mkdir(path.dirname(this.filepath), { recursive: true });
-      await fs.access(path.dirname(this.filepath), fs.constants.R_OK | fs.constants.W_OK);
+      await fs.access(path.dirname(this.filepath), constants.R_OK | constants.W_OK);
       await readFileSnapshots(this.filepath);
       return { ok: true, adapter: this.adapter };
     } catch {
