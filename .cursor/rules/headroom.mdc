@@ -1,5 +1,5 @@
 ---
-description: Headroom product, engineering, security, and build-in-public rules
+description: Headroom product, engineering, security, repository-isolation, and release rules
 alwaysApply: true
 ---
 
@@ -11,6 +11,17 @@ Build a beautiful, useful private API runway dashboard that also works as a conc
 ## Narrow wedge
 Headroom answers: which usage-based provider will become a constraint next, why, and what should the operator do?
 
+## Repository boundary
+- Treat this repository as the complete source of truth for the Headroom application.
+- Do not read from, import from, or write application code into EdgeLens, XProductInsights, sherv-website, or another product repository unless Sherv explicitly requests a reviewed migration.
+- X publishing and campaign automation belong in XProductInsights; they are not runtime dependencies of Headroom.
+- Shared ideas may be reimplemented only after checking licensing, attribution, and product fit. Never copy private configuration, analytics identifiers, snapshots, or credentials between products.
+- Keep the Cursor workspace single-root. Do not add sibling folders to `headroom.code-workspace`.
+
+## Model routing
+- Use Grok 4.5 Very Fast for normal implementation, UI work, documentation, and routine debugging.
+- Escalate to Sonnet 5 only for difficult security or architecture issues, unresolved bugs, or final release QA.
+
 ## UI requirements
 - Prioritize the Headroom signal, runway, status, and provider table.
 - Keep the interface calm, editorial, and screenshot-ready.
@@ -20,7 +31,9 @@ Headroom answers: which usage-based provider will become a constraint next, why,
 ## Security requirements
 - Provider credentials are server-side only and read-only whenever possible.
 - `/record/headroom` must never access live credentials or private data.
-- Never log, commit, or screenshot API keys, account IDs, invoices, or exact live balances.
+- Live dashboard data and setup status must require private authorization outside local development.
+- Never log, commit, return in error responses, or screenshot API keys, account IDs, invoices, exact live balances, local paths, or snapshot contents.
+- Keep `.env*`, `.headroom/`, private screenshots, credentials, and local logs outside Cursor context and Git.
 - Prefer explicit unavailable or stale states over invented precision.
 
 ## Content requirements
@@ -32,4 +45,4 @@ Headroom answers: which usage-based provider will become a constraint next, why,
 - Next.js App Router, TypeScript, Tailwind, pnpm.
 - Minimal dependencies.
 - Explainable calculations and conservative runway language.
-- Run `pnpm lint` and `pnpm build` before treating a milestone as complete.
+- Before completion run `pnpm audit:public`, `pnpm lint`, and `pnpm build`.

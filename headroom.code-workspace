@@ -11,11 +11,25 @@
     "typescript.tsdk": "node_modules/typescript/lib",
     "files.exclude": {
       ".next": true,
-      "node_modules": true
+      "node_modules": true,
+      ".headroom": true,
+      ".vercel": true,
+      "content/private": true,
+      "screenshots/private": true
     },
     "search.exclude": {
       ".next": true,
-      "node_modules": true
+      "node_modules": true,
+      ".headroom": true,
+      ".vercel": true,
+      "content/private": true,
+      "screenshots/private": true
+    },
+    "files.watcherExclude": {
+      "**/.next/**": true,
+      "**/node_modules/**": true,
+      "**/.headroom/**": true,
+      "**/.vercel/**": true
     }
   }
 }

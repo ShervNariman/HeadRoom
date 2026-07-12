@@ -14,6 +14,8 @@ type HeadroomDashboardProps = {
   initialScenario?: DemoScenario;
 };
 
+const ACCESS_TOKEN_STORAGE_KEY = "headroom:access-token";
+
 const statusClass: Record<ProviderStatus, string> = {
   Healthy: "status status-healthy",
   Elevated: "status status-elevated",
@@ -148,7 +150,11 @@ export function HeadroomDashboard({
   useEffect(() => {
     if (recording) return;
 
-    fetch("/api/dashboard", { cache: "no-store" })
+    const accessToken = window.sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+    fetch("/api/dashboard", {
+      cache: "no-store",
+      headers: accessToken ? { "x-headroom-access-token": accessToken } : undefined,
+    })
       .then((response) => response.json())
       .then((value: { mode?: "demo" | "live"; providers?: ProviderMetric[] }) => {
         if (value.mode === "live" && value.providers?.length) {

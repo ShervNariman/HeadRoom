@@ -7,6 +7,12 @@ export const runtime = "nodejs";
 
 const OPENAI_API = "https://api.openai.com/v1";
 
+class OpenAIRequestError extends Error {
+  constructor(public readonly status: number) {
+    super(`OpenAI request failed with status ${status}.`);
+  }
+}
+
 type UsagePage = {
   data?: Array<{
     results?: Array<{
@@ -33,8 +39,7 @@ async function openAIGet<T>(path: string, key: string) {
   });
 
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`OpenAI returned ${response.status}: ${detail.slice(0, 240)}`);
+    throw new OpenAIRequestError(response.status);
   }
 
   return response.json() as Promise<T>;
@@ -49,7 +54,7 @@ export async function POST(request: NextRequest) {
   const key = process.env.OPENAI_ADMIN_KEY;
   if (!key) {
     return NextResponse.json(
-      { error: "Add OPENAI_ADMIN_KEY to .env.local, then restart Headroom." },
+      { error: "OpenAI sync is not configured." },
       { status: 503 },
     );
   }
@@ -111,8 +116,13 @@ export async function POST(request: NextRequest) {
     await appendSnapshot(snapshot);
     return NextResponse.json({ ok: true, snapshot });
   } catch (error) {
+    const status = error instanceof OpenAIRequestError ? error.status : 502;
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "OpenAI sync failed." },
+      {
+        error: status === 401 || status === 403
+          ? "OpenAI rejected the configured credential or organization scope."
+          : "OpenAI sync failed without exposing upstream response details.",
+      },
       { status: 502 },
     );
   }
